@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pokédex Django</title>
+  <style>
+    :root {
+      --borde: #111;
+      --fondo: #fdfdfd;
+      --acento: #e3350d;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: #f2f2f2;
+      margin: 0;
+      padding: 24px;
+      display: flex;
+      justify-content: center;
+    }
+    .pokedex-card {
+      width: 100%;
+      max-width: 480px;
+      background: var(--fondo);
+      border: 3px solid var(--borde);
+      border-radius: 10px;
+      padding: 24px;
+    }
+    h1 {
+      text-align: center;
+      margin: 0 0 20px 0;
+      font-size: 22px;
+      letter-spacing: 1px;
+    }
+    .imagen-box {
+      border: 3px solid var(--borde);
+      border-radius: 6px;
+      height: 220px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 18px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .imagen-box img {
+      max-width: 90%;
+      max-height: 90%;
+      image-rendering: pixelated;
+    }
+    .imagen-box span {
+      font-weight: bold;
+      color: #444;
+    }
+    form {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+    input[type="text"] {
+      flex: 1;
+      border: 3px solid var(--borde);
+      border-radius: 6px;
+      padding: 10px 12px;
+      font-size: 15px;
+      font-weight: bold;
+    }
+    button {
+      border: 3px solid var(--borde);
+      border-radius: 6px;
+      background: #fff;
+      padding: 10px 18px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover { background: #eee; }
+    .ayuda-boton {
+      font-size: 11px;
+      color: #666;
+      margin-bottom: 18px;
+    }
+    .datos {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-top: 12px;
+    }
+    .datos h3 {
+      margin: 0 0 8px 0;
+      font-size: 15px;
+    }
+    .datos p { margin: 4px 0; font-weight: bold; }
+    .datos ul { margin: 4px 0; padding-left: 18px; }
+    .nombre-pokemon {
+      text-align: center;
+      font-weight: bold;
+      font-size: 18px;
+      margin: 0 0 4px 0;
+      text-transform: capitalize;
+    }
+    .origen-badge {
+      display: block;
+      text-align: center;
+      font-size: 11px;
+      margin-bottom: 14px;
+      color: #666;
+    }
+    .origen-badge.nube { color: #1a7f37; }
+    .origen-badge.local { color: #9a6700; }
+    .no-encontrado {
+      text-align: center;
+      color: var(--acento);
+      font-weight: bold;
+      margin-top: 16px;
+    }
+    .disponibles {
+      font-size: 11px;
+      color: #888;
+      text-align: center;
+      margin-top: 18px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <div class="pokedex-card">
+    <h1>🔴 Pokédex Django</h1>
+
+    <div class="imagen-box">
+      {% if pokemon and pokemon.imagen_frontal %}
+        <img src="{{ pokemon.imagen_frontal }}" alt="Imagen de {{ pokemon.nombre }}">
+      {% else %}
+        <span>imagen de pokemon</span>
+      {% endif %}
+    </div>
+
+    <form method="get" action="{% url 'home' %}">
+      <input
+        type="text"
+        name="pokemon"
+        placeholder="Escribir pokemon"
+        value="{{ nombre_query }}"
+        autocomplete="off"
+        autofocus
+      >
+      <button type="submit" name="origen" value="auto">Buscar</button>
+      <button type="submit" name="origen" value="local">SQLite</button>
+    </form>
+    <p class="ayuda-boton">
+      <strong>Buscar:</strong> consulta el microservicio (Supabase, en la nube)
+      y, si no hay internet, usa automáticamente la copia local en SQLite.<br>
+      <strong>SQLite:</strong> consulta directamente la copia local, sin
+      intentar conectarse a internet.
+    </p>
+
+    {% if pokemon %}
+      <p class="nombre-pokemon">{{ pokemon.nombre }}</p>
+      <span class="origen-badge {{ pokemon.origen }}">
+        {% if pokemon.origen == 'nube' %}
+          🌐 Datos obtenidos del microservicio (Supabase)
+        {% elif origen_elegido == 'local' %}
+          💾 Datos de SQLite local (botón "SQLite")
+        {% else %}
+          💾 Sin conexión: datos obtenidos de SQLite local (respaldo automático)
+        {% endif %}
+      </span>
+
+      <div class="datos">
+        <div>
+          <h3>Altura:</h3>
+          <p>{{ pokemon.altura }} m</p>
+          <h3>Peso:</h3>
+          <p>{{ pokemon.peso }} kg</p>
+        </div>
+        <div>
+          <h3>Ataques:</h3>
+          <ul>
+            {% for ataque in pokemon.ataques %}
+              <li>{{ ataque }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    {% elif no_encontrado %}
+      <p class="no-encontrado">
+        No se encontró "{{ nombre_query }}" ni en la nube ni en la copia local.
+      </p>
+    {% else %}
+      <div class="datos">
+        <div>
+          <h3>Altura:</h3>
+          <p>—</p>
+          <h3>Peso:</h3>
+          <p>—</p>
+        </div>
+        <div>
+          <h3>Ataques:</h3>
+          <ul>
+            <li>—</li>
+            <li>—</li>
+          </ul>
+        </div>
+      </div>
+    {% endif %}
+
+    <p class="disponibles">
+      Pokémon disponibles: pikachu · ditto · charizard · pidgey · bulbasaur ·
+      psyduck · incineroar · scorbunny · fearow · ekans
+    </p>
+  </div>
+</body>
+</html>
